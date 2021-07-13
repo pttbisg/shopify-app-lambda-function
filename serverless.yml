@@ -1,0 +1,47 @@
+service: shopify-orders-collector
+
+frameworkVersion: '2'
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  lambdaHashingVersion: '20201221'
+  region: ap-southeast-1
+  timeout: 600
+  environment:
+    STAGE: ${opt:stage, 'dev'}
+    BACKENDLESS_APP_KEY_PROD: ${env:BACKENDLESS_APP_KEY_PROD}
+    BACKENDLESS_APP_ID_PROD: ${env:BACKENDLESS_APP_ID_PROD}
+    AIRTABLE_API_KEY: ${env:AIRTABLE_API_KEY}
+
+functions:
+  consumer:
+    handler: handler.consumer
+    events:
+      - sqs:
+          batchSize: 1
+          arn: arn:aws:sqs:ap-southeast-1:170274338432:shopify-orders-queue
+
+  consumerHTTP:
+    handler: handler.consumerHTTP
+    events:
+      - http:
+          path: /
+          method: POST
+          cors: true
+
+  airtableReplicator:
+    handler: handler.airtableReplicator
+    events:
+      - sqs:
+          batchSize: 1
+          arn: arn:aws:sqs:ap-southeast-1:170274338432:shopify-orders-queue
+
+plugins:
+  - serverless-offline
+  - serverless-dotenv-plugin
+
+custom:
+  serverless-offline:
+    noPrependStageInUrl: true
