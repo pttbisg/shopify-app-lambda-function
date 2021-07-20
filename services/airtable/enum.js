@@ -3,7 +3,7 @@
 const AIRTABLE = {
     API_KEY: process.env.AIRTABLE_API_KEY || "",
     PTTBOutbound: {
-        ID: "appuFoWSGUWJ9yMyq",
+        ID: "appMo5wIJrlBB1ahq",
         TABLE: {
             MainShopifyOrders: "Main Shopify Orders (PTTB)",
         }

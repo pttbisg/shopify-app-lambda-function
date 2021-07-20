@@ -1,139 +1,183 @@
 const axios = require('axios');
 const _ = require('lodash');
 
-const { AirtablePTTBOutboundMainShopifyOrdersService } = require('./services/airtable');
+const {AirtablePTTBOutboundMainShopifyOrdersService} = require('./services/airtable');
 const {
-  ShopifyOrderService,
+    ShopifyOrderService,
 } = require('./services/shopify');
 
 const shopifyOrderService = new ShopifyOrderService();
 const airtablePTTBOutboundMainShopifyOrdersService = new AirtablePTTBOutboundMainShopifyOrdersService();
 
 const consumer = async (event, context, callback) => {
-  try {
-    console.log({
-      message: "Incoming request",
-      data: event,
-    });
+    /*try {
+        console.log({
+            message: "Incoming request",
+            data: event,
+        });
 
-    let results = [];
-    for (const { messageId, body } of event.Records) {
-      const jsonBody = JSON.parse(body);
-      
-      await shopifyOrderService.StoreOrderIntoBE(jsonBody);
+        let results = [];
+        for (const {messageId, body} of event.Records) {
+            const jsonBody = JSON.parse(body);
 
-      results.push(jsonBody);
-    }
+            await shopifyOrderService.StoreOrderIntoBE(jsonBody);
 
-    let res = {
-      statusCode: 200,
-      body: JSON.stringify({
-          message: `Successfully processed ${event.Records.length} messages.`,
-          events: results,
-      }),
-      headers: {
-        " X-Amz-Invocation-Type": "Event",
-      }
-    };
+            results.push(jsonBody);
+        }
 
-    console.log({
-      message: "Outgoing response",
-      data: res,
-    });
+        let res = {
+            statusCode: 200,
+            body: JSON.stringify({
+                message: `Successfully processed ${event.Records.length} messages.`,
+                events: results,
+            }),
+            headers: {
+                " X-Amz-Invocation-Type": "Event",
+            }
+        };
 
-    return res;
+        console.log({
+            message: "Outgoing response",
+            data: res,
+        });
 
-  } catch(err) {
-    console.error(err);
+        return res;
 
+    } catch (err) {
+        console.error(err);
+
+        return {
+            statusCode: 500,
+            body: JSON.stringify({
+                message: "INTERNAL_SERVER_ERROR",
+            })
+        }
+    } finally {
+
+    }*/
     return {
-      statusCode: 500,
-      body: JSON.stringify({
-        message: "INTERNAL_SERVER_ERROR",
-      })
+        statusCode : 200
     }
-  } finally {
-
-  }
 };
 
-const consumerHTTP = async(event) => {
-  try {
-    console.log({
-      message: "Incoming request",
-      data: event,
-    });
+const consumerHTTP = async (event) => {
+    /*try {
+        console.log({
+            message: "Incoming request",
+            data: event,
+        });
 
-    const body = JSON.parse(event.body);
+        const body = JSON.parse(event.body);
 
-    await shopifyOrderService.StoreOrderIntoBE(body);
+        await shopifyOrderService.StoreOrderIntoBE(body);
 
-    let res = {
-      statusCode: 200,
-      body: JSON.stringify(body),
-    };
+        let res = {
+            statusCode: 200,
+            body: JSON.stringify(body),
+        };
 
-    console.log({
-      message: "Outgoing response",
-      data: res,
-    });
+        console.log({
+            message: "Outgoing response",
+            data: res,
+        });
 
-    return res;
-  } catch(err) {
-    console.error(err);
+        return res;
+    } catch (err) {
+        console.error(err);
 
+        return {
+            statusCode: 500,
+            body: JSON.stringify({
+                message: "INTERNAL_SERVER_ERROR",
+            })
+        }
+    }*/
     return {
-      statusCode: 500,
-      body: JSON.stringify({
-        message: "INTERNAL_SERVER_ERROR",
-      })
+        statusCode : 200
     }
-  }
 }
 
-const airtableReplicator = async(event) => {
-  try {
-    console.log({
-      message: "Incoming request",
-      data: event,
-    });
+const airtableReplicator = async (event) => {
+    try {
+        console.log({
+            message: "Incoming messages",
+            records: event.Records.length,
+            data: event.Records
+        });
 
-    let results = [];
-    for (const { messageId, body } of event.Records) {
-      const jsonBody = JSON.parse(body);
+        const results = [];
+        for (const {body} of event.Records) {
+            const recordJSON = JSON.parse(body);
+            console.log('record inline', recordJSON);
+            const res = await airtablePTTBOutboundMainShopifyOrdersService.UpsertBEShopifyOrder(recordJSON);
+            results.push(res);
+        }
 
-      console.log(jsonBody);
+        const responseObject = {
+            statusCode: 200,
+            body: JSON.stringify(results),
+        }
 
-      let res = await airtablePTTBOutboundMainShopifyOrdersService.UpsertBEShopifyOrder(jsonBody);
+        console.log({
+            message: "Outgoing response",
+            data: responseObject,
+        });
 
-      results = results.concat(res);
+        return responseObject;
+    } catch (error) {
+        console.error(error);
+        return {
+            statusCode: 500,
+            body: JSON.stringify({
+                message: "INTERNAL_SERVER_ERROR",
+            })
+        }
     }
+}
 
-    let res = {
-      statusCode: 200,
-      body: JSON.stringify(results),
-    };
+const airtableReplicator1 = async (event) => {
+    try {
+        console.log({
+            message: "Incoming request",
+            data: event,
+        });
 
-    console.log({
-      message: "Outgoing response",
-      data: res,
-    });
+        let results = [];
+        for (const {messageId, body} of event.Records) {
+            const jsonBody = JSON.parse(body);
 
-    return res;
-  } catch(err) {
-    console.error(err);
+            console.log(jsonBody);
 
-    return {
-      statusCode: 500,
-      body: JSON.stringify({
-        message: "INTERNAL_SERVER_ERROR",
-      })
+            let res = await airtablePTTBOutboundMainShopifyOrdersService.UpsertBEShopifyOrder(jsonBody);
+
+            results = results.concat(res);
+        }
+
+        let res = {
+            statusCode: 200,
+            body: JSON.stringify(results),
+        };
+
+        console.log({
+            message: "Outgoing response",
+            data: res,
+        });
+
+        return res;
+    } catch (err) {
+        console.error(err);
+
+        return {
+            statusCode: 500,
+            body: JSON.stringify({
+                message: "INTERNAL_SERVER_ERROR",
+            })
+        }
     }
-  }
 }
 
 module.exports = {
-  consumer,
-  consumerHTTP,
-  airtableReplicator,
+    consumer,
+    consumerHTTP,
+    airtableReplicator,
 };
