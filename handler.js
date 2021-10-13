@@ -1,5 +1,6 @@
 const axios = require('axios');
 const _ = require('lodash');
+const {sendMessageToQueue} = require("./services/sqs");
 
 const {AirtablePTTBOutboundMainShopifyOrdersService} = require('./services/airtable');
 const {
@@ -107,10 +108,16 @@ const airtableReplicator = async (event) => {
 
         const results = [];
         for (const {body} of event.Records) {
-            const recordJSON = JSON.parse(body);
-            console.log('record inline', recordJSON);
-            const res = await airtablePTTBOutboundMainShopifyOrdersService.UpsertBEShopifyOrder(recordJSON);
-            results.push(res);
+            try {
+                const recordJSON = JSON.parse(body);
+                console.log('record inline', recordJSON);
+                const res = await airtablePTTBOutboundMainShopifyOrdersService.UpsertBEShopifyOrder(recordJSON);
+                results.push(res);
+            } catch (e) {
+                // Send data back to queue.
+                const queueName = process.env.AIRTABLE_RETURNED_MESSAGES_QUEUE;
+                sendMessageToQueue(queueName, body);
+            }
         }
 
         const responseObject = {
